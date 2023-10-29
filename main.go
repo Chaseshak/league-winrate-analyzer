@@ -12,10 +12,7 @@ import (
 )
 
 func main() {
-	err := godotenv.Load()
-	if err != nil {
-		fmt.Println("Error loading .env file:", err)
-	}
+	loadEnv()
 
 	summonerName := flag.String("summoner", "", "Summoner name to fetch matches for")
 	tagline := flag.String("tagline", "", "Riot ID tagline (e.g. NA1)")
@@ -38,3 +35,11 @@ func main() {
 	api.FetchMatches(&summoner)
 }
 
+func loadEnv() {
+	err := godotenv.Load()
+	if err != nil {
+		fmt.Println("Error loading .env file:", err)
+		fmt.Println("Please create a .env following the .env.example file")
+		os.Exit(1)
+	}
+}
