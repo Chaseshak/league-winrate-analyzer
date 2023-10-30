@@ -7,6 +7,7 @@ import (
 
 	"github.com/joho/godotenv"
 
+	"github.com/Chaseshak/league-winrate-analyzer/analyze"
 	"github.com/Chaseshak/league-winrate-analyzer/api"
 	"github.com/Chaseshak/league-winrate-analyzer/models"
 )
@@ -32,7 +33,18 @@ func main() {
 		TagLine:  *tagline,
 	}
 
-	api.FetchMatches(&summoner)
+	matches := api.FetchMatches(&summoner)
+	results := analyze.Summarize(summoner, matches)
+
+	for champion, championStats := range results {
+		fmt.Println("---When playing against---", champion)
+
+		for myChampion, result := range championStats {
+			winrate := float64(result.Wins) / float64(result.Games) * 100
+			winrate = float64(int(winrate*100)) / 100
+			fmt.Println("\t", myChampion, ":", winrate, "%", "(", result.Wins, "/", result.Games, ")")
+		}
+	}
 }
 
 func loadEnv() {

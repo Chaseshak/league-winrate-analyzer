@@ -7,7 +7,8 @@ const (
 	Jungle  TeamPosition = "JUNGLE"
 	Mid     TeamPosition = "MID"
 	Bot     TeamPosition = "BOT"
-	Support TeamPosition = "SUPPORT"
+	Support TeamPosition = "SUPPORT" // It seems like this might be UTILITY instead
+	Utility TeamPosition = "UTILITY"
 )
 
 type Match struct {

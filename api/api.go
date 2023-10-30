@@ -22,7 +22,7 @@ const (
 	match_ids_path  = "/lol/match/v5/matches/by-puuid"
 	match_path      = "/lol/match/v5/matches"
 	ranked_queue_id = "420"
-	rate_limit      = 15
+	rate_limit      = 95 // The real rate limit is 100 per 2 minutes, but we want to be safe
 )
 
 func FetchMatches(summoner *models.Summoner) []models.Match {
@@ -30,7 +30,7 @@ func FetchMatches(summoner *models.Summoner) []models.Match {
 	matchIDs := fetchMatchIDs(summoner)
 	fmt.Println("Found", len(matchIDs), "matches")
 
-	sem := make(chan struct{}, 20)
+	sem := make(chan struct{}, rate_limit)
 
 	var matches []models.Match
 	var mu sync.Mutex
@@ -54,20 +54,22 @@ func FetchMatches(summoner *models.Summoner) []models.Match {
 			mu.Unlock()
 		}(matchID)
 
-		time.Sleep(time.Second / rate_limit)
+		time.Sleep(time.Minute * 2 / rate_limit)
 	}
 
 	for i := 0; i < cap(sem); i++ {
 		sem <- struct{}{}
 	}
 
-	return []models.Match{}
+	return matches
 }
 
 func fetchMatchIDs(summoner *models.Summoner) []string {
 	url := buildUrl(fmt.Sprintf("%s/%s/ids", match_ids_path, summoner.Puuid))
 	perPage := 100
-	start, _ := time.Parse("2006-01-02 15:04:05", "2023-08-10 00:00:00")
+
+	// TODO: Make start time configurable
+	start, _ := time.Parse("2006-01-02 15:04:05", "2023-09-30 00:00:00")
 	queryParams := map[string]string{
 		"startTime": strconv.FormatInt(start.Unix(), 10),
 		"count":     strconv.Itoa(perPage),
@@ -134,7 +136,6 @@ func apiGet(url url.URL, params map[string]string) []byte {
 	}
 	if resp.StatusCode != 200 {
 		log.Printf("Error %d from %s: %s", resp.StatusCode, url.String(), responseBody)
-		log.Fatal("Exiting...")
 	}
 
 	return responseBody
